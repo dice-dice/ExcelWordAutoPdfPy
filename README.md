@@ -1,7 +1,15 @@
 # Excel/Word 自動PDF化アプリ (Python版)
 
+[![CI](https://github.com/dice-dice/ExcelWordAutoPdfPy/actions/workflows/ci.yml/badge.svg)](https://github.com/dice-dice/ExcelWordAutoPdfPy/actions/workflows/ci.yml)
+
 Excel/WordファイルをLibreOffice経由で定期的にPDF化する、クロスプラットフォーム(Windows/Mac/Linux)対応の常駐アプリです。
 指定したファイルの更新日時をチェックし、前回変換時から変わっていれば自動でPDF化します。
+
+## ダウンロード
+
+Pythonの実行環境がなくても使えるビルド済み実行ファイルを
+[Releases](https://github.com/dice-dice/ExcelWordAutoPdfPy/releases) から配布しています
+(Windows / macOS / Linux)。利用にはLibreOfficeが別途必要です。
 
 ## 動作環境
 
@@ -60,6 +68,11 @@ PDF化したいExcel/Wordファイルと同じフォルダにコピーして使�
 - `conversion_service.py` — LibreOffice headless変換の実処理
 - `monitor_service.py` — 周期チェック・変更検知を行うバックグラウンド監視
 - `job_edit_dialog.py` / `settings_dialog.py` — 設定用ダイアログ
+- `tests/` — 自動テスト(`pip install -r requirements-dev.txt` の上 `pytest` で実行)
+
+pushのたびにGitHub Actions(`.github/workflows/ci.yml`)で構文チェックとテストが自動実行されます。
+`v*.*.*` 形式のタグをpushすると、Windows/macOS/Linux向けの実行ファイルを自動ビルドして
+[Releases](https://github.com/dice-dice/ExcelWordAutoPdfPy/releases) に公開します(`.github/workflows/release.yml`)。
 
 ## 動作確認済みの内容
 

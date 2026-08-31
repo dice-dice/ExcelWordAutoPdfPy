@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset_name: ExcelWordAutoPdf-windows
+          - os: macos-latest
+            asset_name: ExcelWordAutoPdf-macos
+          - os: ubuntu-latest
+            asset_name: ExcelWordAutoPdf-linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Install Tk (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: pyinstaller --onefile --windowed --name ExcelWordAutoPdf app.py
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: pyinstaller --windowed --name ExcelWordAutoPdf app.py
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: pyinstaller --onefile --name ExcelWordAutoPdf app.py
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/ExcelWordAutoPdf.exe -DestinationPath ${{ matrix.asset_name }}.zip
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: ditto -c -k --sequesterRsrc --keepParent dist/ExcelWordAutoPdf.app ${{ matrix.asset_name }}.zip
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: (cd dist && zip ../${{ matrix.asset_name }}.zip ExcelWordAutoPdf)
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            Excel/WordファイルをLibreOffice経由で定期的にPDF化する常駐アプリです。
+
+            **利用にはLibreOfficeのインストールが必要です。**
+            https://ja.libreoffice.org/download/libreoffice/
+
+            - Windows版: `ExcelWordAutoPdf-windows.zip` を展開して `ExcelWordAutoPdf.exe` を実行
+            - macOS版: `ExcelWordAutoPdf-macos.zip` を展開して `ExcelWordAutoPdf.app` を実行
+              (署名なしのため、初回はFinderで右クリック→「開く」が必要な場合があります)
+            - Linux版: `ExcelWordAutoPdf-linux.zip` を展開して `ExcelWordAutoPdf` を実行
+          files: artifacts/**/*.zip
