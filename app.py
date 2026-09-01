@@ -27,7 +27,13 @@ except ImportError:
 
 def get_base_dir() -> str:
     if getattr(sys, "frozen", False):
-        return os.path.dirname(sys.executable)
+        exe_dir = os.path.dirname(sys.executable)
+        # macOSの.appバンドルはexecutableが Contents/MacOS/ の中にあるため、
+        # そのままだと「.appを置いたフォルダ」ではなくバンドル内部が基準になってしまう。
+        # .appそのものがあるフォルダまで3階層上がる。
+        if sys.platform == "darwin" and exe_dir.endswith(os.path.join(".app", "Contents", "MacOS")):
+            return os.path.dirname(os.path.dirname(os.path.dirname(exe_dir)))
+        return exe_dir
     return os.path.dirname(os.path.abspath(__file__))
 
 
