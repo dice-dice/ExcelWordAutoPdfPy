@@ -18,23 +18,48 @@ Pythonの実行環境がなくても使えるビルド済み実行ファイル�
 
 ## 使い方
 
-### そのまま実行する場合
+### 実行ファイルをダブルクリックする場合(推奨・非エンジニア向け)
+
+[Releases](https://github.com/dice-dice/ExcelWordAutoPdfPy/releases) から自分のOS用のzipをダウンロードして展開すると、
+コマンド操作なしでダブルクリックだけで起動できる実行ファイルが入っています。
+
+- Windows: `ExcelWordAutoPdf.exe`
+- macOS: `ExcelWordAutoPdf.app`
+- Linux: `ExcelWordAutoPdf`
+
+これをPDF化したいExcel/Wordファイルと同じフォルダに置いて起動します。
+
+> **未署名アプリの警告について**: 開発元の署名(コード署名/公証)をしていないため、初回起動時に
+> OSが警告を出すことがあります。
+> - macOS: Finderでアイコンを右クリック→「開く」を選ぶと起動できます(「壊れている」と表示される場合は
+>   ターミナルで `xattr -cr ExcelWordAutoPdf.app` を実行してから再度開いてください)。
+> - Windows: 「WindowsによってPCが保護されました」の画面で「詳細情報」→「実行」を選ぶと起動できます。
+
+### ソースコードから実行する場合(開発者向け)
 
 ```bash
 cd ExcelWordAutoPdfPy
 python3 app.py
 ```
 
-### 実行ファイル(exe/アプリ)化したい場合
+### 自分でビルドする場合
 
 ```bash
 pip install pyinstaller
-pyinstaller --noconsole --onefile --name ExcelWordAutoPdf app.py
+
+# Windows
+pyinstaller --onefile --windowed --name ExcelWordAutoPdf app.py
+
+# macOS (ExcelWordAutoPdf.app が生成される)
+pyinstaller --windowed --name ExcelWordAutoPdf app.py
+
+# Linux
+pyinstaller --onefile --name ExcelWordAutoPdf app.py
 ```
 
-生成された実行ファイル(`dist/ExcelWordAutoPdf` または `dist/ExcelWordAutoPdf.exe`)を、
-PDF化したいExcel/Wordファイルと同じフォルダにコピーして使います。
+生成された実行ファイル(`dist/`以下)を、PDF化したいExcel/Wordファイルと同じフォルダにコピーして使います。
 **PyInstallerはビルドを実行したOS向けの実行ファイルしか作れません**(Windows用exeが欲しい場合はWindows機でビルドしてください)。
+`v*.*.*`タグをpushすれば、この3つを自動ビルドしてReleasesに公開する仕組みが既に用意されています(下記参照)。
 
 ### 起動後の操作
 
@@ -82,6 +107,8 @@ pushのたびにGitHub Actions(`.github/workflows/ci.yml`)で構文チェック�
 - docxを別名・別出力フォルダ指定でPDF化
 - 相対パス指定(アプリと同じフォルダに置くケース)でのファイル解決
 - 変更検知: ファイル未変更時は再変換をスキップし、変更後は次回チェックで再変換される動作
+- PyInstallerでビルドした `ExcelWordAutoPdf.app` をダブルクリック相当の方法で起動し、
+  コマンド操作なしで実際に立ち上がることを確認済み
 
 ## 既知の制限
 
@@ -91,3 +118,12 @@ pushのたびにGitHub Actions(`.github/workflows/ci.yml`)で構文チェック�
   ジョブ数が多い、または変換に時間がかかるファイルが多い場合、周期どおりのタイミングからずれることがあります。
 - 変換対象ファイルを他のアプリ(Excel/Word本体など)で開いたまま保存していない状態だと、
   ディスク上のファイルの更新日時が変わらないため検知されません。保存後に変換されます。
+
+## トラブルシューティング
+
+- **ソースから `python3 app.py` で起動した際に、ウィンドウを開こうとした瞬間に
+  `macOS 13 (1307) or later required, have instead 13 (1306)` のようなエラーで落ちる場合**:
+  macOSに標準搭載されている古いPython(Tcl/Tk 8.5)とOSのバージョンとの相性問題です。
+  [Releases](https://github.com/dice-dice/ExcelWordAutoPdfPy/releases) のビルド済み`.app`を使うか、
+  Homebrewなどで新しいPython(`brew install python-tk`)を入れて実行してください
+  (Tk 9系であれば発生しません)。この問題はビルド済み実行ファイルには影響しません。
